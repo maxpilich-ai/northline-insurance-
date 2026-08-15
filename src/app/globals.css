@@ -1,0 +1,307 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   DESIGN TOKENS
+   Institutional Editorial — warm paper ground, warm near-black
+   ink, dark bookends, one accent used scarcely.
+   ============================================================ */
+
+:root {
+  /* Surfaces */
+  --paper: #f7f5f0; /* warm off-white — never pure white */
+  --paper-alt: #eeebe3; /* subtle band for alternating sections */
+  /* The translucent form of the band — see the note on --accent-rule below.
+     Six panels asked for it with a Tailwind alpha modifier and were silently
+     given no background at all. Derived from --paper-alt rather than repeating
+     the hex, so the two can never drift. */
+  --paper-alt-wash: color-mix(in srgb, var(--paper-alt) 60%, transparent);
+  --ink-deep: #121310; /* header/footer bookends, anchor sections */
+
+  /* Type */
+  --ink: #1a1a17; /* warm near-black — never #000 — 16.01:1 on paper */
+  --muted: #5e5b54; /* secondary text on paper — 6.22:1 (5.69:1 on paper-alt) */
+  --on-dark: #f2efe8; /* primary text on ink-deep — 16.24:1 */
+  --muted-dark: #a8a49b; /* secondary text on ink-deep — 7.50:1 */
+
+  /* Accent — appears on primary CTAs and almost nowhere else. */
+  --accent: #1d4634; /* deep forest — 9.74:1 on paper; paper on accent 9.74:1 */
+  --accent-hover: #143025;
+  --accent-light: #8fc4a8; /* accent legible on dark — 9.44:1 on ink-deep */
+
+  /*
+   * TRANSLUCENT ACCENT — real tokens, not Tailwind `/NN` modifiers.
+   *
+   * FINDING R4-09, WIDENED. The audit found `placeholder:text-muted/60` on the
+   * styleguide. The mechanism is not specific to placeholders or to `muted`:
+   * every colour in tailwind.config.ts is a bare `var(--x)`, which Tailwind
+   * cannot decompose, so ANY `/NN` on one of them silently drops the whole
+   * declaration. A repo-wide scan found three more — `border-accent/40` on the
+   * production notes and the two wizard asides, which therefore drew the
+   * default hairline instead of an accent rule, and `has-[:checked]:bg-accent/5`
+   * on the styleguide's option card, which drew no checked tint at all.
+   *
+   * Verified rather than assumed: compiling `border-accent/40 bg-accent/5
+   * text-muted/60 border-l-2` against this palette emits `border-l-2` and
+   * nothing else.
+   *
+   * A second pass widened it again: the config's hyphenated colours are QUOTED
+   * keys, which the first version of the scan did not match, so it had been
+   * checking only half the palette. That pass found an alpha-modified
+   * `accent-light` border in the footer, and six alpha-modified `paper-alt`
+   * panels — six section bands that had been rendering with no background.
+   *
+   * These tokens are the translucent values the design actually wanted,
+   * declared where every other colour is declared. `tests/regression/
+   * doc-consistency.mjs` fails if a `/NN` modifier reappears on a bare token.
+   */
+  --accent-rule: color-mix(in srgb, var(--accent) 40%, transparent);
+  --accent-wash: color-mix(in srgb, var(--accent) 5%, transparent);
+  --accent-light-rule: color-mix(in srgb, var(--accent-light) 50%, transparent);
+
+  /* Structure — hairlines, never drop shadows */
+  --rule: rgba(26, 26, 23, 0.14);
+  --rule-strong: rgba(26, 26, 23, 0.28);
+  --rule-dark: rgba(242, 239, 232, 0.16);
+  --rule-dark-strong: rgba(242, 239, 232, 0.32);
+
+  /* Layout */
+  --gutter: 1.5rem;
+
+  color-scheme: light;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 2.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --gutter: 3.5rem;
+  }
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+* {
+  border-color: var(--rule);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  font-feature-settings: "kern" 1, "liga" 1, "tnum" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular figures everywhere numbers appear. Misaligned numerals are the
+   fastest way to lose credibility on a financial-services site. */
+.tnum,
+table,
+time,
+.numeral {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Display face: high optical size, wonk and softness dialled out so the
+   serif reads institutional rather than decorative. */
+.font-display {
+  font-variation-settings: "opsz" 144, "SOFT" 0, "WONK" 0;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* ============================================================
+   FOCUS — visible, never removed
+   ============================================================ */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+.on-dark :focus-visible,
+.bg-ink-deep :focus-visible {
+  outline-color: var(--accent-light);
+}
+
+/* ------------------------------------------------------------
+   SCROLL PADDING — keep focused things out from under the chrome
+   (findings R4-03 and R4-08)
+
+   Two pieces of persistent UI overlap the page: a sticky header at the top and,
+   on phones, a fixed call bar at the bottom. Neither is in the flow, so the
+   browser's scroll-into-view — the thing that runs when a keyboard user tabs to
+   an element below the fold — put focused controls straight underneath them.
+   Measured at 390x844: the footer's "About" link scrolled to 794..810 while the
+   call bar occupied 779..844. Entirely covered; `elementFromPoint` at its centre
+   returned the bar, not the link. WCAG 2.2 SC 2.4.11 (Focus Not Obscured, AA).
+
+   `--chrome-top` and `--chrome-bottom` are published by Header and
+   MobileCallBar from their own measured heights, so this stays correct when the
+   header shrinks on scroll, when the call bar is hidden, and at every viewport,
+   instead of encoding a number that was right on one device.
+
+   The fallbacks matter: before hydration, and with JavaScript off, the
+   variables are unset and these resolve to 0px + the gap — which is exactly the
+   old behaviour, never worse.
+   ------------------------------------------------------------ */
+html {
+  scroll-padding-top: calc(var(--chrome-top, 0px) + 1rem);
+  scroll-padding-bottom: calc(var(--chrome-bottom, 0px) + 1rem);
+}
+
+/* ------------------------------------------------------------
+   FOCUS ON VISUALLY-HIDDEN CONTROLS (finding R3-H4)
+
+   The quote wizard and the producer application present their choices as
+   cards: a real <input type="radio"> for semantics and keyboard behaviour,
+   hidden with .sr-only, wrapped in a <label> that carries all the visible
+   styling. The rule above did fire for those inputs — but it drew the outline
+   on the input, which is a 1x1 box with `clip: rect(0,0,0,0)`. The ring was
+   painted where nothing is visible.
+
+   Measured before this rule: screenshotting an option card focused and
+   unfocused produced byte-identical PNGs, while an ordinary button differed.
+   A keyboard user had no indication of position on the site's primary
+   conversion form — WCAG 2.1 SC 2.4.7 (Focus Visible, AA), on a site that
+   states AA conformance on /terms.
+
+   `:has()` projects the ring onto the element that is actually on screen. It
+   is one rule rather than a class on every call site, so a new card-style
+   control inherits it automatically instead of forgetting it.
+   ------------------------------------------------------------ */
+label:has(input.sr-only:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.on-dark label:has(input.sr-only:focus-visible),
+.bg-ink-deep label:has(input.sr-only:focus-visible) {
+  outline-color: var(--accent-light);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+/* ============================================================
+   TOKEN MARKER
+   Unverified business facts stay visible in the rendered page so
+   nothing unconfirmed can slip into launch unnoticed.
+   ============================================================ */
+
+.token {
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  /* Placeholders are long strings with no natural break points. Allow them to
+     break anywhere so an unresolved token can never force horizontal overflow
+     on a narrow viewport. Only ever applies to unresolved values — once the
+     owner fills a value in, this class is not applied at all. */
+  overflow-wrap: anywhere;
+}
+
+.on-dark .token {
+  text-decoration-color: color-mix(in srgb, var(--accent-light) 60%, transparent);
+}
+
+/* ============================================================
+   PRODUCTION NOTE ON A DARK GROUND
+
+   The note is styled for the paper ground: --muted body text and --accent for
+   its label. Both are near-black-on-near-black once the note sits inside a
+   dark section — measured at 2.75:1 and 1.76:1 against a 4.5:1 requirement,
+   which is a real legibility failure, not a theoretical one.
+
+   The design system already publishes dark-ground equivalents of exactly these
+   two roles, so the fix is to use them rather than to invent a colour.
+   ============================================================ */
+
+.on-dark .production-note {
+  color: var(--muted-dark); /* 7.50:1 on ink-deep */
+  border-left-color: var(--accent-light-rule);
+}
+
+.on-dark .production-note .production-note-label {
+  color: var(--accent-light); /* 9.44:1 on ink-deep */
+}
+
+/* ============================================================
+   MOTION — one gesture, 260ms, once. Nothing else.
+   ============================================================ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 260ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.reveal[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   FORM CONTROLS — 16px minimum on mobile to prevent iOS zoom
+   ============================================================ */
+
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+/* Utility: hairline rule used as the primary separator */
+.hairline {
+  border-top: 1px solid var(--rule);
+}
+
+.hairline-dark {
+  border-top: 1px solid var(--rule-dark);
+}
