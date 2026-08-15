@@ -133,7 +133,7 @@ const CSP = [
   // With Turnstile off there is no third-party frame to allow at all.
   TURNSTILE_ENABLED === "1" ? `frame-src ${TURNSTILE_HOST}` : "frame-src 'none'",
   "manifest-src 'self'",
-  "upgrade-insecure-requests",
+  ...(process.env.NODE_ENV === "production" ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const SECURITY_HEADERS = [
