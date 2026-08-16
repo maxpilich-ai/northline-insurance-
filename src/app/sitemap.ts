@@ -7,6 +7,8 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site-url";
 import { INDEXING_ALLOWED } from "@/lib/metadata";
 
+export const dynamic = "force-static";
+
 /** Stamped once per build, so every entry in one sitemap agrees. */
 const BUILD_TIME = new Date();
 

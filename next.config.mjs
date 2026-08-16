@@ -181,7 +181,10 @@ const nextConfig = {
     ? {
         output: "export",
         images: { unoptimized: true },
-        trailingSlash: false,
+        trailingSlash: true,
+        ...(process.env.GH_PAGES_BASE
+          ? { basePath: process.env.GH_PAGES_BASE, assetPrefix: process.env.GH_PAGES_BASE }
+          : {}),
       }
     : {}),
 };

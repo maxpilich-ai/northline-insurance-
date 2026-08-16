@@ -3,6 +3,8 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site-url";
 import { INDEXING_ALLOWED } from "@/lib/metadata";
 
+export const dynamic = "force-static";
+
 /**
  * PRE-LAUNCH: the whole site is disallowed, and every page also carries a
  * noindex directive from the root layout.
